@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo List</title>
+  <link rel="stylesheet" href="/Public/style.css">
+</head>
+<body>
+    <style>
+        /* style.css */
+      
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #f4f4f4;
+          margin: 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start; /* Align items to the start */
+          height: 100vh;
+        }
+      
+        h1 {
+          color: #333;
+          text-align: center;
+          margin-bottom: 20px;
+        }
+      
+        #todo-form {
+          display: flex;
+          flex-direction: column; /* Stack children vertically */
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+      
+        #task {
+          padding: 10px;
+          border: 1px solid #5F4B8B;
+          border-radius: 4px;
+          transition: border-color 0.3s ease;
+        }
+      
+        #task:focus {
+          border-color: #48546B; /* Updated border color when input is focused */
+        }
+      
+        button {
+          padding: 8px;
+          background-color: #5F4B8B;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+        }
+      
+        button:hover {
+          background-color: #5F4B8B;
+        }
+      
+        #tasks {
+          list-style: none;
+          padding: 0;
+          width: 100%;
+          max-width: 400px;
+          overflow-y: auto; /* Add vertical scroll if necessary */
+        }
+      
+        .task {
+          background-color: #fff;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: space-around;
+          border: 1px solid #ddd;
+          padding: 10px;
+          margin-bottom: 10px;
+          border-radius: 4px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          transition: transform 0.3s ease;
+        }
+      
+        .task:hover {
+          transform: scale(1.02);
+        }
+      
+        .task span {
+          margin-right: 10px;
+        }
+      
+        .task button {
+          background-color: #ec6c95;
+          transition: background-color 0.3s ease;
+        }
+      
+        .task button:hover {
+          background-color: #5C6795;
+        }
+      
+        .task .edit-btn {
+          background-color: #5C6795;
+          transition: background-color 0.3s ease;
+        }
+      
+        .task .edit-btn:hover {
+          background-color: #48546B;
+        }
+      </style>
+      
+
+  <h1>Todo List</h1>
+  
+  <form id="todo-form">
+    <label for="task">Task:</label>
+    <input type="text" id="task" name="task" required>
+    <button type="button" onclick="addTask()">Add Task</button>
+  </form>
+
+  <ul id="tasks"></ul>
+
+  <script>
+    async function fetchData() {
+      const response = await fetch('/api/todos');
+      const data = await response.json();
+      const tasksContainer = document.getElementById('tasks');
+      tasksContainer.innerHTML = '';
+
+      data.forEach(todo => {
+        const taskItem = createTaskElement(todo);
+        tasksContainer.appendChild(taskItem);
+      });
+    }
+
+    async function addTask() {
+      const taskInput = document.getElementById('task');
+      const task = taskInput.value;
+
+      if (task) {
+        const response = await fetch('/api/todos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `task=${task}`,
+        });
+
+        taskInput.value = '';
+        fetchData();
+      }
+    }
+
+    async function editTask(id) {
+      const newTask = prompt('Edit task:', '');
+
+      if (newTask !== null) {
+        const response = await fetch(`/api/todos/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `task=${newTask}`,
+        });
+
+        if (response.ok) {
+          fetchData();
+        } else {
+          console.error('Failed to edit task');
+        }
+      }
+    }
+
+    async function deleteTask(id) {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchData();
+      } else {
+        console.error('Failed to delete task');
+      }
+    }
+
+    function createTaskElement(todo) {
+      const taskItem = document.createElement('li');
+      taskItem.className = 'task';
+      taskItem.innerHTML = `
+        <span>${todo.task}</span>
+        <button class="edit-btn" onclick="editTask(${todo.id})">Edit</button>
+        <button onclick="deleteTask(${todo.id})">Delete</button>
+      `;
+      return taskItem;
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>
